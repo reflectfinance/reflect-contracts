@@ -22,8 +22,8 @@ contract REFLECT is Context, IERC20, Ownable {
     address[] private _excluded;
    
     uint256 private constant MAX = ~uint256(0);
-    uint256 private constant _tTotal = 10 * 10**6 * 10**9;
-    uint256 private _rTotal = (MAX - (MAX % _tTotal));
+    uint256 private constant _totalSupply = 10 * 10**6 * 10**9;
+    uint256 private _rTotal = (MAX - (MAX % _totalSupply));
     uint256 private _tFeeTotal;
 
     string private _name = 'reflect.finance';
@@ -32,7 +32,7 @@ contract REFLECT is Context, IERC20, Ownable {
 
     constructor () public {
         _rOwned[_msgSender()] = _rTotal;
-        emit Transfer(address(0), _msgSender(), _tTotal);
+        emit Transfer(address(0), _msgSender(), _totalSupply);
     }
 
     function name() public view returns (string memory) {
@@ -48,7 +48,7 @@ contract REFLECT is Context, IERC20, Ownable {
     }
 
     function totalSupply() public view override returns (uint256) {
-        return _tTotal;
+        return _totalSupply;
     }
 
     function balanceOf(address account) public view override returns (uint256) {
@@ -104,7 +104,7 @@ contract REFLECT is Context, IERC20, Ownable {
     }
 
     function reflectionFromToken(uint256 tAmount, bool deductTransferFee) public view returns(uint256) {
-        require(tAmount <= _tTotal, "Amount must be less than supply");
+        require(tAmount <= _totalSupply, "Amount must be less than supply");
         if (!deductTransferFee) {
             (uint256 rAmount,,,,) = _getValues(tAmount);
             return rAmount;
@@ -130,7 +130,7 @@ contract REFLECT is Context, IERC20, Ownable {
     }
 
     function includeAccount(address account) external onlyOwner() {
-        require(_isExcluded[account], "Account is already excluded");
+        require(_isExcluded[account], "Account is already included");
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
                 _excluded[i] = _excluded[_excluded.length - 1];
@@ -235,13 +235,13 @@ contract REFLECT is Context, IERC20, Ownable {
 
     function _getCurrentSupply() private view returns(uint256, uint256) {
         uint256 rSupply = _rTotal;
-        uint256 tSupply = _tTotal;      
+        uint256 tSupply = _totalSupply;      
         for (uint256 i = 0; i < _excluded.length; i++) {
-            if (_rOwned[_excluded[i]] > rSupply || _tOwned[_excluded[i]] > tSupply) return (_rTotal, _tTotal);
+            if (_rOwned[_excluded[i]] > rSupply || _tOwned[_excluded[i]] > tSupply) return (_rTotal, _totalSupply);
             rSupply = rSupply.sub(_rOwned[_excluded[i]]);
             tSupply = tSupply.sub(_tOwned[_excluded[i]]);
         }
-        if (rSupply < _rTotal.div(_tTotal)) return (_rTotal, _tTotal);
+        if (rSupply < _rTotal.div(_totalSupply)) return (_rTotal, _totalSupply);
         return (rSupply, tSupply);
     }
 }
